@@ -1,9 +1,10 @@
 <template>
     <div>
         <VueCalendar :currentView="currentView" ref="calendar" />
+
         <EventForm :showForm="showForm" @save-event="saveEvent" />
     </div>
-</div></template>
+</template>
   
 <script>
 import VueCalendar from './../libs/VueCalendar';
