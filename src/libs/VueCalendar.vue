@@ -15,6 +15,14 @@ export default {
     currentView: {
       type: String,
       required: true
+    },
+    dateClickHandler: {
+      type: Function,
+      default: () => () => {} // Default is an empty function
+    },
+    eventClickHandler: {
+      type: Function,
+      default: () => () => {} // Default is an empty function
     }
   },
   data() {
@@ -44,27 +52,27 @@ export default {
       let calendaroptions = {
         plugins,
         initialView: currentView,
+        dateClick: this. dateClickHandler,
+        eventClick: this.eventClickHandler,
         headerToolbar: {
           start: '',
           center: '',
           end: '',
         }
-      }       
+      }
 
       if (currentView === 'multiMonthFourMonth') {
         plugins.push(multiMonthPlugin);
-        calendaroptions.initialView ='multiMonth';
-        calendaroptions.views =  {
-            multiMonth: {
-              type: 'multiMonth',
-              duration: { months: 4 }
-            }
+        calendaroptions.initialView = 'multiMonth';
+        calendaroptions.views = {
+          multiMonth: {
+            type: 'multiMonth',
+            duration: { months: 4 }
           }
+        }
       }
-
       const calendarEl = this.$refs.calendar;
       this.calendar = new Calendar(calendarEl, calendaroptions);
-
       this.calendar.render();
     }
   },
@@ -76,5 +84,4 @@ export default {
 };
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

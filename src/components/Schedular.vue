@@ -2,7 +2,14 @@
     <div class="calendar-navbar">
         <!-- Left Section -->
         <div class="left-section">
-            <ButtonContainer :currentView="currentView" :views="views" @nav-button-click="(view) => changeView(view)" />
+            <div class="button-container">
+                <button v-for="view in views" :key="view" :class="{ active: currentView.viewId === view.viewId }"
+                    @click="() => changeView(view)" class="button">
+                    <div class="inner-button" v-if="currentView.viewId === view.viewId"></div>
+                    <div class="text">{{ view.viewName }}</div>
+                </button>
+            </div>
+            <!-- <ButtonContainer :currentView="currentView" :views="views" @nav-button-click="(view) => changeView(view)" /> -->
         </div>
 
         <!-- Center Section -->
@@ -19,7 +26,8 @@
     </div>
 
     <!-- Calendar -->
-    <Calendar :currentView="currentView.viewId" />
+    <Calendar :currentView="currentView.viewId" :showEventForm="showEventForm" @date-click="openCreateEventModal"
+        @close-form="handleCloseForm" />
 </template>
   
 <script>
@@ -43,11 +51,12 @@ export default {
             ,
             currentView: { viewName: 'MONTH', viewId: 'dayGridMonth' },
             currentDate: new Date(),
+            showEventForm: false
         };
     },
     computed: {
         centerText() {
-            const text = this.getViewText(this.currentView.viewName );
+            const text = this.getViewText(this.currentView.viewName);
             if (this.currentView.viewName === 'QUARTER') {
                 return `Quarter ${text}`;
             }
@@ -56,10 +65,11 @@ export default {
     },
     methods: {
         changeView(view) {
+            console.log(view)
             this.currentView = view;
         },
         navigate(change) {
-            const step = this.getStep(this.currentView.viewName );
+            const step = this.getStep(this.currentView.viewName);
             this.currentDate = new Date(this.currentDate.getTime() + change * step);
         },
         getViewText(view) {
@@ -127,9 +137,12 @@ export default {
                     return 0;
             }
         },
-        openCreateEventModal() {
-            // Logic to open the create event modal
+        openCreateEventModal(info) {
+            this.showEventForm = !this.showEventForm;
         },
+        handleCloseForm() {
+            this.showEventForm = false;
+        }
     },
 };
 </script>
@@ -178,5 +191,77 @@ export default {
     font-weight: bold;
     margin: 0 10px;
 }
+/* navigation */
+.button-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  width: 100%;
+  border: 1px solid blue;
+  padding: 7px 15px 24px 0px;
+  align-items: center;
+  background-color: #E9EEF9;
+  border-radius: 4px;
+}
+
+.button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #58595E;
+  cursor: pointer;
+  background-color: #58595E;
+}
+
+.button-container button:not(:last-child)::after {
+  content: '';
+  width: 57px;
+  height: 10%;
+  background-color: #58595E;
+  margin: 0 10px;
+  display: flex;
+  position: relative;
+  top: 0px;
+  z-index: 111;
+  margin-left: 22px;
+}
+
+.button-container button.active:not(:last-child)::after {
+  top: -7px;
+}
+
+.inner-button {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background-color: #fff;
+  margin: auto;
+}
+
+.text-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.button .text {
+  font-size: 11px;
+  color: #ccc;
+  position: relative;
+  top: 20px;
+  padding: 0;
+  margin: 0;
+  left: -7px;
+  height: 0;
+  color: #000;
+}
+
+.button.active .text {
+  top: 12px;
+}
+
 </style>
   
