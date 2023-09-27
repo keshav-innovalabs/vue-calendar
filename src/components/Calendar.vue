@@ -1,18 +1,8 @@
 <template>
     <div>
         <VueCalendar :currentView="currentView" ref="calendar" :dateClickHandler="handleDateClick"
-            :eventClickHandler="handleEventClick" />
-        <!-- <EventForm 
-        v-click-outside="closeForm" 
-        @click.self="closeForm" 
-        :showForm="showEventForm"
-         @save-event="saveEvent" 
-         /> -->
-        <EventForm 
-        @click.self="closeForm" 
-        :showForm="showEventForm"
-         @save-event="saveEvent" 
-         />
+            :eventClickHandler="handleEventClick" :events="eventData" />
+        <EventForm @click="closeForm" :showForm="showEventForm" @save-event="saveEvent" :dateData="dateData" />
     </div>
 </template>
   
@@ -39,29 +29,43 @@ export default {
             type: Boolean,
             required: true,
             default: false
+        },
+        closeForm: {
+            type: Function,
+            required: true
         }
     },
     data() {
         return {
+            dateData: null,
+            eventData: [
+            ]
         };
+    },
+    watch: {
     },
     methods: {
         saveEvent(eventData) {
-            this.showForm = false;
+            this.eventData.push(eventData);
+            this.$emit('close-event-form');
         },
         handleDateClick(dateStr) {
+            this.dateData = dateStr;
             this.$emit('date-click', dateStr);
         },
         handleEventClick(eventInfo) {
             console.log('Event clicked:', eventInfo);
-        },
-        closeForm() {
-            this.$emit('close-form');
         }
     },
 };
 </script>
   
 <style>
-
+.fc .fc-toolbar-title {
+    font-size: 1.75em;
+    margin: 0px 5px;
+    display: inline-block;
+    position: relative;
+    top: 6px;
+}
 </style>

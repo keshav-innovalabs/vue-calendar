@@ -27,7 +27,8 @@
 
     <!-- Calendar -->
     <Calendar :currentView="currentView.viewId" :showEventForm="showEventForm" @date-click="openCreateEventModal"
-        @close-form="handleCloseForm" />
+        @close-event-form="closeEventForm"
+        />
 </template>
   
 <script>
@@ -65,8 +66,8 @@ export default {
     },
     methods: {
         changeView(view) {
-            console.log(view)
             this.currentView = view;
+            this.showEventForm = false;
         },
         navigate(change) {
             const step = this.getStep(this.currentView.viewName);
@@ -140,9 +141,9 @@ export default {
         openCreateEventModal(info) {
             this.showEventForm = !this.showEventForm;
         },
-        handleCloseForm() {
+        closeEventForm() {
             this.showEventForm = false;
-        }
+        },
     },
 };
 </script>

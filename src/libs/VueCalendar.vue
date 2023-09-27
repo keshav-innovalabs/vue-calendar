@@ -8,7 +8,7 @@ import DayGridPlugin from '@fullcalendar/daygrid';
 import TimeGridPlugin from '@fullcalendar/timegrid';
 import InteractionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
-
+import rrulePlugin from '@fullcalendar/rrule'
 export default {
   name: 'VueCalendar',
   props: {
@@ -18,11 +18,15 @@ export default {
     },
     dateClickHandler: {
       type: Function,
-      default: () => () => {} // Default is an empty function
+      default: () => () => { } // Default is an empty function
     },
     eventClickHandler: {
       type: Function,
-      default: () => () => {} // Default is an empty function
+      default: () => () => { } // Default is an empty function
+    },
+    events: {
+      type: Array,
+      required: true,
     }
   },
   data() {
@@ -32,14 +36,20 @@ export default {
   },
   watch: {
     currentView(newView) {
-      this.initializeCalendar(newView);
+      this.initializeCalendar(newView, this.events);
+    },
+    events: {
+      handler(newEvents) {
+        this.initializeCalendar(this.currentView, newEvents);
+      },
+      deep: true
     }
   },
   mounted() {
     this.initializeCalendar(this.currentView);
   },
   methods: {
-    initializeCalendar(currentView) {
+    initializeCalendar(currentView, events) {
       if (this.calendar) {
         this.calendar.destroy();
       }
@@ -47,18 +57,21 @@ export default {
       let plugins = [
         DayGridPlugin,
         TimeGridPlugin,
-        InteractionPlugin
+        InteractionPlugin,
+        rrulePlugin,
       ];
       let calendaroptions = {
         plugins,
         initialView: currentView,
-        dateClick: this. dateClickHandler,
+        dateClick: this.dateClickHandler,
         eventClick: this.eventClickHandler,
+        events: events,
         headerToolbar: {
           start: '',
-          center: '',
+          center: 'prev,title,next',
           end: '',
-        }
+        },
+        timeZone: 'local',
       }
 
       if (currentView === 'multiMonthFourMonth') {
@@ -71,6 +84,8 @@ export default {
           }
         }
       }
+      console.log(events)
+
       const calendarEl = this.$refs.calendar;
       this.calendar = new Calendar(calendarEl, calendaroptions);
       this.calendar.render();
