@@ -18,11 +18,11 @@ export default {
     },
     dateClickHandler: {
       type: Function,
-      default: () => () => { } // Default is an empty function
+      default: () => () => { } 
     },
     eventClickHandler: {
       type: Function,
-      default: () => () => { } // Default is an empty function
+      default: () => () => { } 
     },
     events: {
       type: Array,
@@ -43,7 +43,7 @@ export default {
         this.initializeCalendar(this.currentView, newEvents);
       },
       deep: true
-    }
+      }
   },
   mounted() {
     this.initializeCalendar(this.currentView);
@@ -68,10 +68,11 @@ export default {
         events: events,
         headerToolbar: {
           start: '',
-          center: 'prev,title,next',
+          center: '',
           end: '',
         },
         timeZone: 'local',
+        editable: true,
       }
 
       if (currentView === 'multiMonthFourMonth') {
@@ -89,7 +90,13 @@ export default {
       const calendarEl = this.$refs.calendar;
       this.calendar = new Calendar(calendarEl, calendaroptions);
       this.calendar.render();
-    }
+    },
+    goToPrev() {
+      this.calendar.prev();
+    },
+    goToNext() {
+      this.calendar.next(); 
+    },
   },
   beforeDestroy() {
     if (this.calendar) {

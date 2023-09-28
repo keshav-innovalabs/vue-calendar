@@ -2,7 +2,8 @@
     <div>
         <VueCalendar :currentView="currentView" ref="calendar" :dateClickHandler="handleDateClick"
             :eventClickHandler="handleEventClick" :events="eventData" />
-        <EventForm @click="closeForm" :showForm="showEventForm" @save-event="saveEvent" :dateData="dateData" />
+        <EventForm @click="closeForm" :showForm="showEventForm" @save-event="saveEvent" :dateData="dateData"
+            :selectedEvent="selectedEvent" />
     </div>
 </template>
   
@@ -38,6 +39,7 @@ export default {
     data() {
         return {
             dateData: null,
+            selectedEvent: null,
             eventData: [
             ]
         };
@@ -45,8 +47,23 @@ export default {
     watch: {
     },
     methods: {
-        saveEvent(eventData) {
-            this.eventData.push(eventData);
+        saveEvent(eventToSave) {
+            console.log('eventToSave: ', eventToSave);
+            console.log('events', this.eventData)
+            this.selectedEvent = null;
+            const eventIndex = this.eventData.findIndex((event) => {
+                console.log( event.id ,eventToSave.id)
+                return  event.id === eventToSave.id
+            });
+            console.log('eventIndex', eventIndex)
+            if (eventIndex !== -1) {
+                this.eventData[eventIndex] = {
+                    ...this.eventData[eventIndex],
+                    ...eventToSave,
+                };
+            } else {
+                this.eventData.push(eventToSave);
+            }
             this.$emit('close-event-form');
         },
         handleDateClick(dateStr) {
@@ -54,7 +71,8 @@ export default {
             this.$emit('date-click', dateStr);
         },
         handleEventClick(eventInfo) {
-            console.log('Event clicked:', eventInfo);
+            this.selectedEvent = eventInfo.event;
+            this.$emit('event-click');
         }
     },
 };

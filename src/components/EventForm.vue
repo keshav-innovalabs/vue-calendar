@@ -65,6 +65,7 @@
 </template>
   
 <script>
+import { v4 as uuidv4 } from 'uuid';
 export default {
   name: 'EventForm',
   props: {
@@ -75,13 +76,18 @@ export default {
     dateData: {
       type: Object,
       required: true,
+    },
+    selectedEvent: {
+      type: Object
     }
   },
   data() {
     return {
       eventData: {
+        id:'',
         title: '',
         description: '',
+        startDate: '',
         startTime: '',
         endDate: '',
         endTime: '',
@@ -100,11 +106,9 @@ export default {
     };
   },
   mounted() {
-
   },
   watch: {
     dateData(newDateData) {
-      console.log("datedata", this.dateData)
       const gridType = newDateData.view.type;
 
       if (gridType === 'dayGridMonth' || gridType === 'multiMonthFourMonth') {
@@ -124,6 +128,30 @@ export default {
         this.resetState();
       }
     },
+    selectedEvent: {
+      handler(newEvent) {
+        console.log('event to edit', newEvent)
+        if (newEvent) {
+          this.eventData.id = newEvent.id
+          this.eventData.title = newEvent.title;
+          this.eventData.description = newEvent.extendedProps.description;
+          const startDate = new Date(newEvent.startStr);
+          console.log(newEvent)
+          const endDate = new Date(newEvent.endStr);
+          console.log(startDate, endDate);
+          this.eventData.startDate = startDate.toISOString().split('T')[0];
+          this.eventData.startTime = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          this.eventData.endDate = endDate.toISOString().split('T')[0];
+          this.eventData.endTime = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          this.eventData.repeatFrequency = newEvent.extendedProps.repeatFrequency;
+          this.eventData.meetingLocation = newEvent.extendedProps.meetingLocation;
+          this.eventData.notes = newEvent.extendedProps.notes;
+          this.eventData.includedPeople = newEvent.extendedProps.includedPeople;
+        }
+      },
+      deep: true
+    }
   },
   methods: {
     resetStartFields() {
@@ -158,68 +186,12 @@ export default {
       this.newNote = '';
       this.showAddNoteField = false;
     },
-    // saveEvent() {
-    //   if (this.eventData.repeatFrequency === 'monthly') {
-    //     const currentDate = new Date();
-    //     const currentYear = currentDate.getFullYear();
-    //     const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
-
-    //     const event = {
-    //       title: this.eventData.title,
-    //       description: this.eventData.description,
-    //       rrule: {
-    //         freq: 'monthly',
-    //         interval: 1, // Monthly recurrence
-    //         dtstart: `${this.eventData.startDate}T${this.eventData.startTime}`,
-    //         until: endOfYear.toISOString(),
-    //       },
-    //       allDay: false, // Assuming it's not an all-day event
-    //       includedPeople: this.eventData.includedPeople,
-    //       meetingLocation: this.eventData.meetingLocation,
-    //       notes: this.eventData.notes,
-    //     }
-    //     this.$emit('save-event', event);
-    //   } else {
-    //     const startISO = new Date(
-    //       `${this.eventData.startDate}T${this.eventData.startTime}`
-    //     ).toISOString();
-    //     const endISO = new Date(
-    //       `${this.eventData.endDate}T${this.eventData.endTime}`
-    //     ).toISOString();
-    //     const event = {
-    //       title: this.eventData.title,
-    //       description: this.eventData.description,
-    //       start: startISO,
-    //       end: endISO,
-    //       allDay: false, // Set to false for events with specific times
-    //       includedPeople: this.eventData.includedPeople,
-    //       meetingLocation: this.eventData.meetingLocation,
-    //       notes: this.eventData.notes,
-    //     };
-    //     const daysOfWeek = [];
-
-    //     if (this.eventData.repeatFrequency === 'daily') {
-    //       daysOfWeek.push(0, 1, 2, 3, 4, 5, 6);
-    //     } else if (this.eventData.repeatFrequency === 'weekly') {
-    //       const startDate = new Date(
-    //         `${this.eventData.startDate}T${this.eventData.startTime}`
-    //       );
-    //       const startDayOfWeek = startDate.getDay();
-    //       daysOfWeek.push(startDayOfWeek);
-    //     }
-    //     if (daysOfWeek.length > 0) {
-    //       event['daysOfWeek'] = daysOfWeek
-    //     }
-    //     this.$emit('save-event', event);
-    //   }
-    // },
 
     saveEvent() {
       const events = [];
-
       if (!this.eventData.repeatFrequency) {
-        // If no repetition, push the single event to the events array
         events.push({
+          id:this.eventData.id? this.eventData.id :uuidv4(),
           title: this.eventData.title,
           description: this.eventData.description,
           start: new Date(`${this.eventData.startDate}T${this.eventData.startTime}`).toISOString(),
@@ -240,48 +212,42 @@ export default {
           until: '',
           byweekday: [],
         };
-
-        // Set dtstart and until based on repeatFrequency
         if (this.eventData.repeatFrequency === 'daily') {
           rrule.freq = 'daily';
           rrule.dtstart = `${this.eventData.startDate}T${this.eventData.startTime}:00`;
           rrule.until = endOfYear.toISOString();
         } else if (this.eventData.repeatFrequency === 'weekly') {
           rrule.freq = 'weekly';
-          rrule.dtstart = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`);
-          rrule.until = endOfYear;
 
-          // Determine the day of the week based on startDate and FullCalendar's format (0 for Sunday, 1 for Monday, etc.)
           const startDate = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`);
+          startDate.setDate(startDate.getDate() - 1);
+          rrule.dtstart = startDate;
+          rrule.until = endOfYear;
           const dayOfWeek = startDate.getDay();
-
-          // Adjust dayOfWeek to FullCalendar's format
-          const fullCalendarDayOfWeek = (dayOfWeek === 0) ? 7 : dayOfWeek;
-
-          // Push the adjusted day of the week to byweekday array
-          rrule.byweekday.push(fullCalendarDayOfWeek);
+          rrule.byweekday.push(dayOfWeek);
         } else if (this.eventData.repeatFrequency === 'monthly') {
           rrule.freq = 'monthly';
           rrule.dtstart = `${this.eventData.startDate}T${this.eventData.startTime}:00`;
-          rrule.until = endOfYear.toISOString(); // Adjust the end date as needed
+          rrule.until = endOfYear.toISOString();
           const dayOfMonth = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`).getDate();
-          // Set the bymonthday property to the extracted day of the month
           rrule.bymonthday = [dayOfMonth];
         }
 
-        // Push the event data with the rrule property
         events.push({
+          id:this.eventData.id ? this.eventData.id:uuidv4(),
           title: this.eventData.title,
           description: this.eventData.description,
-          rrule, // Include the rrule configuration
+          rrule,
           allDay: false,
           includedPeople: this.eventData.includedPeople,
           meetingLocation: this.eventData.meetingLocation,
           notes: this.eventData.notes,
+
         });
       }
 
       this.$emit('save-event', events[0]);
+      this.resetState();
     }
     ,
     resetState() {

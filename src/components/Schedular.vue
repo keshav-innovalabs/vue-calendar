@@ -14,9 +14,9 @@
 
         <!-- Center Section -->
         <div class="center-section">
-            <button @click="navigate(-1)">&lt;</button>
+            <button @click="navigate(-1), goPrev()">&lt;</button>
             <span>{{ centerText }}</span>
-            <button @click="navigate(1)">></button>
+            <button @click="navigate(1), goNext()">></button>
         </div>
 
         <!-- Right Section -->
@@ -26,8 +26,9 @@
     </div>
 
     <!-- Calendar -->
-    <Calendar :currentView="currentView.viewId" :showEventForm="showEventForm" @date-click="openCreateEventModal"
+    <Calendar ref="vuecalendar" :currentView="currentView.viewId" :showEventForm="showEventForm" @date-click="openCreateEventModal"
         @close-event-form="closeEventForm"
+        @event-click="handleEventClick"
         />
 </template>
   
@@ -52,7 +53,7 @@ export default {
             ,
             currentView: { viewName: 'MONTH', viewId: 'dayGridMonth' },
             currentDate: new Date(),
-            showEventForm: false
+            showEventForm: false,
         };
     },
     computed: {
@@ -88,14 +89,14 @@ export default {
             }
         },
         formatDate(date) {
-            const options = { weekday: 'short', day: 'numeric', MONTH: 'long', year: 'numeric' };
+            const options = { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' };
             return date.toLocaleDateString(undefined, options);
         },
         getWeekText(date) {
             const weekNumber = this.getWeekNumber(date);
             const formattedDate = this.formatDate(date);
             const year = date.getFullYear();
-            return `Week ${weekNumber} - ${formattedDate} ${year}`;
+            return `Week ${weekNumber} - ${formattedDate} `;
         },
 
         getWeekNumber(date) {
@@ -144,6 +145,20 @@ export default {
         closeEventForm() {
             this.showEventForm = false;
         },
+        handleEventClick(info) {
+            this.showEventForm = true;
+        },
+        goPrev() {
+    const vueCalendar  = this.$refs.vuecalendar;
+    const calendar = vueCalendar.$refs.calendar;
+    calendar.goToPrev()
+  },
+
+  goNext() {
+    const vueCalendar  = this.$refs.vuecalendar;
+    const calendar = vueCalendar.$refs.calendar;
+    calendar.goToNext() ;
+  },
     },
 };
 </script>
