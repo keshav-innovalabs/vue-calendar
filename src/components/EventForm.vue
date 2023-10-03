@@ -79,12 +79,16 @@ export default {
     },
     selectedEvent: {
       type: Object
+    },
+    getEventById: {
+      type: Function,
+      required: true,
     }
   },
   data() {
     return {
       eventData: {
-        id:'',
+        id: '',
         title: '',
         description: '',
         startDate: '',
@@ -95,6 +99,7 @@ export default {
         includedPeople: [],
         meetingLocation: '',
         notes: [],
+        specificEventInstanceId:null
       },
       newPerson: {
         name: '',
@@ -130,25 +135,31 @@ export default {
     },
     selectedEvent: {
       handler(newEvent) {
-        console.log('event to edit', newEvent)
         if (newEvent) {
-          this.eventData.id = newEvent.id
-          this.eventData.title = newEvent.title;
-          this.eventData.description = newEvent.extendedProps.description;
-          const startDate = new Date(newEvent.startStr);
-          console.log(newEvent)
-          const endDate = new Date(newEvent.endStr);
-          console.log(startDate, endDate);
+          this.eventData.id = newEvent.event.id
+          this.eventData.title = newEvent.event.title;
+          this.eventData.description = newEvent.event.extendedProps.description;
+          const startDate = new Date(newEvent.event.startStr);
           this.eventData.startDate = startDate.toISOString().split('T')[0];
           this.eventData.startTime = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          this.eventData.endDate = endDate.toISOString().split('T')[0];
-          this.eventData.endTime = endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-          this.eventData.repeatFrequency = newEvent.extendedProps.repeatFrequency;
-          this.eventData.meetingLocation = newEvent.extendedProps.meetingLocation;
-          this.eventData.notes = newEvent.extendedProps.notes;
-          this.eventData.includedPeople = newEvent.extendedProps.includedPeople;
+          this.eventData.meetingLocation = newEvent.event.extendedProps.meetingLocation;
+          this.eventData.notes = newEvent.event.extendedProps.notes;
+          this.eventData.includedPeople = newEvent.event.extendedProps.includedPeople;
+          if (!newEvent.event.extendedProps.isRecurring) {
+
+            this.eventData.endDate = endDate?.toISOString().split('T')[0];
+            this.eventData.endTime = endDate?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          }
+          if (newEvent.event.extendedProps.isRecurring) {
+            this.eventData.specificEventInstanceId = newEvent.event._instance.instanceId
+;
+          }
         }
+        // else {
+        //   console.log('repeated events', this.getEventById(newEvent.id))
+        // }
       },
       deep: true
     }
@@ -191,58 +202,60 @@ export default {
       const events = [];
       if (!this.eventData.repeatFrequency) {
         events.push({
-          id:this.eventData.id? this.eventData.id :uuidv4(),
+          id: this.eventData.id ? this.eventData.id : uuidv4(),
           title: this.eventData.title,
-          description: this.eventData.description,
           start: new Date(`${this.eventData.startDate}T${this.eventData.startTime}`).toISOString(),
           end: new Date(`${this.eventData.endDate}T${this.eventData.endTime}`).toISOString(),
-          allDay: false,
+          extendedProps: {
+            allDay: false,
+          description: this.eventData.description,
+          repeatFrequency: this.eventData.repeatFrequency,
           includedPeople: this.eventData.includedPeople,
           meetingLocation: this.eventData.meetingLocation,
+          specificEventInstanceId: this.eventData.specificEventInstanceId,
           notes: this.eventData.notes,
+          isRecurring: false,
+          }
         });
       } else {
         const currentDate = new Date();
         const currentYear = currentDate.getFullYear();
         const endOfYear = new Date(currentYear, 11, 31, 23, 59, 59);
 
+        const startDate = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`);
         const rrule = {
           freq: '',
-          dtstart: '',
-          until: '',
+          dtstart: startDate.toISOString(),
+          until: endOfYear.toISOString(),
           byweekday: [],
         };
+
         if (this.eventData.repeatFrequency === 'daily') {
           rrule.freq = 'daily';
-          rrule.dtstart = `${this.eventData.startDate}T${this.eventData.startTime}:00`;
-          rrule.until = endOfYear.toISOString();
         } else if (this.eventData.repeatFrequency === 'weekly') {
           rrule.freq = 'weekly';
-
-          const startDate = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`);
           startDate.setDate(startDate.getDate() - 1);
-          rrule.dtstart = startDate;
-          rrule.until = endOfYear;
           const dayOfWeek = startDate.getDay();
           rrule.byweekday.push(dayOfWeek);
         } else if (this.eventData.repeatFrequency === 'monthly') {
           rrule.freq = 'monthly';
-          rrule.dtstart = `${this.eventData.startDate}T${this.eventData.startTime}:00`;
-          rrule.until = endOfYear.toISOString();
           const dayOfMonth = new Date(`${this.eventData.startDate}T${this.eventData.startTime}`).getDate();
           rrule.bymonthday = [dayOfMonth];
         }
 
         events.push({
-          id:this.eventData.id ? this.eventData.id:uuidv4(),
+          id: this.eventData.id ? this.eventData.id : uuidv4(),
           title: this.eventData.title,
           description: this.eventData.description,
           rrule,
           allDay: false,
+          repeatFrequency: this.eventData.repeatFrequency,
           includedPeople: this.eventData.includedPeople,
           meetingLocation: this.eventData.meetingLocation,
           notes: this.eventData.notes,
-
+          specificEventInstanceId: this.eventData.specificEventInstanceId,
+          isRecurring: true,
+          excludedDates:[]
         });
       }
 

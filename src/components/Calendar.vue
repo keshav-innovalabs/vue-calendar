@@ -1,9 +1,9 @@
 <template>
     <div>
         <VueCalendar :currentView="currentView" ref="calendar" :dateClickHandler="handleDateClick"
-            :eventClickHandler="handleEventClick" :events="eventData" />
+            :eventClickHandler="handleEventClick" :events="eventData" :eventToEdit="eventToEdit" />
         <EventForm @click="closeForm" :showForm="showEventForm" @save-event="saveEvent" :dateData="dateData"
-            :selectedEvent="selectedEvent" />
+            :selectedEvent="selectedEvent" :getEventById="getEventById" />
     </div>
 </template>
   
@@ -41,7 +41,8 @@ export default {
             dateData: null,
             selectedEvent: null,
             eventData: [
-            ]
+            ],
+            eventToEdit: null
         };
     },
     watch: {
@@ -52,17 +53,18 @@ export default {
             console.log('events', this.eventData)
             this.selectedEvent = null;
             const eventIndex = this.eventData.findIndex((event) => {
-                console.log( event.id ,eventToSave.id)
-                return  event.id === eventToSave.id
+                console.log(event.id, eventToSave.id)
+                return event.id === eventToSave.id
             });
             console.log('eventIndex', eventIndex)
             if (eventIndex !== -1) {
-                this.eventData[eventIndex] = {
-                    ...this.eventData[eventIndex],
-                    ...eventToSave,
-                };
+                // this.eventData[eventIndex] = {
+                //     ...this.eventData[eventIndex],
+                //     ...eventToSave,
+                // };
+                this.eventToEdit = eventToSave
             } else {
-                this.eventData.push(eventToSave);
+                this.eventToEdit = eventToSave
             }
             this.$emit('close-event-form');
         },
@@ -71,8 +73,13 @@ export default {
             this.$emit('date-click', dateStr);
         },
         handleEventClick(eventInfo) {
-            this.selectedEvent = eventInfo.event;
+            console.log('eventinof', eventInfo, eventInfo.event._instance)
+            this.selectedEvent = eventInfo;
             this.$emit('event-click');
+        },
+        getEventById(EventId) {
+            const event = this.$refs.calendar.getEventById(EventId);
+            return event;
         }
     },
 };
@@ -85,5 +92,14 @@ export default {
     display: inline-block;
     position: relative;
     top: 6px;
+}
+
+.fc-event:hover {
+    background-color: #bedbbb;
+    cursor: pointer;
+}
+.strike-through {
+  text-decoration: line-through;
+  color: gray; 
 }
 </style>
